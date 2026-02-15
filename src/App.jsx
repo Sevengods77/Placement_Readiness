@@ -1,56 +1,27 @@
-import React from 'react';
-import TopBar from './components/layout/TopBar';
-import ContextHeader from './components/layout/ContextHeader';
-import SecondaryPanel from './components/layout/SecondaryPanel';
-import ProofFooter from './components/layout/ProofFooter';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import DashboardLayout from './pages/DashboardLayout';
+import Dashboard from './pages/Dashboard';
+import Practice from './pages/Practice';
+import Assessments from './pages/Assessments';
+import Resources from './pages/Resources';
+import Profile from './pages/Profile';
 
 function App() {
-    return (
-        <div className="app-container">
-            <TopBar />
-
-            <main className="main-layout">
-                <div className="primary-workspace">
-                    <div className="container-720">
-                        <ContextHeader />
-
-                        <div className="workspace-content">
-                            <div className="card">
-                                <h3>Primary Interaction Area</h3>
-                                <p>
-                                    This workspace is dedicated to the core product experience.
-                                    It follows a 70% width constraint for optimal readability
-                                    and focuses on clean, predictable interactions.
-                                </p>
-
-                                <div className="example-actions" style={{ marginTop: '24px' }}>
-                                    <button className="btn btn-primary">Primary Action</button>
-                                    <button className="btn btn-secondary" style={{ marginLeft: '12px' }}>Secondary Action</button>
-                                </div>
-                            </div>
-
-                            <div className="card" style={{ marginTop: '24px' }}>
-                                <h3>Component Rules</h3>
-                                <ul className="rules-list">
-                                    <li>Solid Deep Red for primary actions</li>
-                                    <li>Calm off-white background (#F7F6F3)</li>
-                                    <li>Serif headings with generous spacing</li>
-                                    <li>No gradients, no glassmorphism</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="secondary-panel-wrapper">
-                    <SecondaryPanel />
-                </div>
-            </main>
-
-            <ProofFooter />
-        </div>
-    );
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/app" element={<DashboardLayout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="practice" element={<Practice />} />
+          <Route path="assessments" element={<Assessments />} />
+          <Route path="resources" element={<Resources />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;
