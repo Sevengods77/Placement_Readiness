@@ -1,47 +1,153 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Award, CheckCircle2, Calendar, HelpCircle, ArrowLeft, Tag } from 'lucide-react';
+import { Award, CheckCircle2, Calendar, HelpCircle, ArrowLeft, Tag, Copy, Download, Target, Check, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { getAnalysisById } from '../services/storageService';
+import { getAnalysisById, updateAnalysis } from '../services/storageService';
 
 export default function Results() {
     const location = useLocation();
     const navigate = useNavigate();
     const [analysisData, setAnalysisData] = useState(null);
+    const [skillConfidence, setSkillConfidence] = useState({});
+    const [adjustedScore, setAdjustedScore] = useState(0);
+    const [analysisId, setAnalysisId] = useState(null);
 
     useEffect(() => {
         console.log("Results page loaded");
-        console.log("Location:", location);
 
-        // Get analysis ID from URL
         const params = new URLSearchParams(location.search);
-        const analysisId = params.get('id');
+        const id = params.get('id');
 
-        if (analysisId) {
-            console.log("Loading analysis from history:", analysisId);
-            const savedAnalysis = getAnalysisById(analysisId);
+        if (id) {
+            console.log("Loading analysis:", id);
+            const saved = getAnalysisById(id);
 
-            if (savedAnalysis) {
-                console.log("Found saved analysis:", savedAnalysis);
-                setAnalysisData(savedAnalysis);
+            if (saved) {
+                console.log("Found analysis:", saved);
+                setAnalysisData(saved);
+                setAnalysisId(id);
+
+                // Initialize or restore confidence map
+                const confidenceMap = saved.skillConfidenceMap || {};
+                setSkillConfidence(confidenceMap);
+
+                // Calculate adjusted score
+                const base = saved.baseReadinessScore || saved.readinessScore;
+                const adjusted = calculateScore(base, confidenceMap);
+                setAdjustedScore(adjusted);
             } else {
-                console.log("No saved analysis found, redirecting");
                 alert("Analysis not found!");
                 navigate('/app/analyzer');
             }
         } else {
-            // No ID provided, redirect to analyzer
-            console.log("No analysis ID provided, redirecting to analyzer");
             navigate('/app/analyzer');
         }
     }, [location, navigate]);
+
+    const calculateScore = (baseScore, confidenceMap) => {
+        const knowCount = Object.values(confidenceMap).filter(v => v === 'know').length;
+        const practiceCount = Object.values(confidenceMap).filter(v => v === 'practice').length;
+        const score = baseScore + (knowCount * 2) - (practiceCount * 2);
+        return Math.max(0, Math.min(100, score));
+    };
+
+    const handleSkillToggle = (skill) => {
+        const newConfidence = {
+            ...skillConfidence,
+            [skill]: skillConfidence[skill] === 'know' ? 'practice' : 'know'
+        };
+
+        setSkillConfidence(newConfidence);
+
+        const base = analysisData.baseReadinessScore || analysisData.readinessScore;
+        const newScore = calculateScore(base, newConfidence);
+        setAdjustedScore(newScore);
+
+        // Save to localStorage
+        updateAnalysis(analysisId, {
+            skillConfidenceMap: newConfidence,
+            readinessScore: newScore
+        });
+    };
+
+    const copyToClipboard = (text, label) => {
+        navigator.clipboard.writeText(text).then(() => {
+            alert(`${label} copied to clipboard!`);
+        });
+    };
+
+    const formatPlan = () => {
+        if (!analysisData) return '';
+        return analysisData.plan.map(day =>
+            `Day ${day.day}: ${day.title}\n${day.tasks.map(t => `  • ${t}`).join('\n')}`
+        ).join('\n\n');
+    };
+
+    const formatChecklist = () => {
+        if (!analysisData) return '';
+        return analysisData.checklist.map(round =>
+            `Round ${round.round}: ${round.title}\n${round.items.map(i => `  ✓ ${i}`).join('\n')}`
+        ).join('\n\n');
+    };
+
+    const formatQuestions = () => {
+        if (!analysisData) return '';
+        return analysisData.questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n');
+    };
+
+    const downloadTXT = () => {
+        if (!analysisData) return;
+
+        const content = `
+JOB DESCRIPTION ANALYSIS REPORT
+================================
+Company: ${analysisData.company || 'N/A'}
+Role: ${analysisData.role || 'N/A'}
+Readiness Score: ${adjustedScore}/100
+
+DETECTED SKILLS
+===============
+${Object.entries(analysisData.extractedSkills).map(([cat, skills]) =>
+            `${cat}:\n${skills.map(s => `  • ${s} [${skillConfidence[s] === 'know' ? 'I know this' : 'Need practice'}]`).join('\n')}`
+        ).join('\n\n')}
+
+7-DAY STUDY PLAN
+================
+${formatPlan()}
+
+ROUND-WISE PREPARATION CHECKLIST
+=================================
+${formatChecklist()}
+
+10 LIKELY INTERVIEW QUESTIONS
+==============================
+${formatQuestions()}
+`;
+
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `analysis_${analysisData.company || 'report'}_${new Date().toISOString().split('T')[0]}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const getWeakSkills = () => {
+        if (!skillConfidence) return [];
+        return Object.entries(skillConfidence)
+            .filter(([_, conf]) => conf === 'practice')
+            .map(([skill]) => skill)
+            .slice(0, 3);
+    };
 
     if (!analysisData) {
         return <div className="text-center py-20">Loading...</div>;
     }
 
-    const { company, role, extractedSkills, readinessScore, checklist, plan, questions } = analysisData;
+    const { company, role, extractedSkills, checklist, plan, questions } = analysisData;
+    const weakSkills = getWeakSkills();
 
     return (
         <div className="space-y-8 max-w-6xl mx-auto">
@@ -73,22 +179,23 @@ export default function Results() {
             <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
                 <CardContent className="py-8">
                     <div className="flex items-center justify-center gap-8">
-                        <CircularProgress score={readinessScore} />
+                        <CircularProgress score={adjustedScore} />
                         <div className="text-center">
                             <Award className="w-12 h-12 text-primary mx-auto mb-2" />
                             <h3 className="text-xl font-bold text-gray-900">Your Readiness Score</h3>
-                            <p className="text-gray-600 mt-1">Based on JD analysis and skill match</p>
+                            <p className="text-gray-600 mt-1">Live score based on skill assessment</p>
+                            <p className="text-xs text-gray-500 mt-2">+2 per "know" • -2 per "practice"</p>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Extracted Skills */}
+            {/* Interactive Skills */}
             <Card>
                 <CardHeader>
                     <CardTitle>
                         <Tag className="w-5 h-5 inline mr-2" />
-                        Detected Skills
+                        Detected Skills - Self Assessment
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -97,17 +204,91 @@ export default function Results() {
                             <div key={category}>
                                 <h4 className="text-sm font-bold text-gray-700 mb-2">{category}</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {skills.map((skill, idx) => (
-                                        <span
-                                            key={idx}
-                                            className="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full border border-primary/20"
-                                        >
-                                            {skill}
-                                        </span>
-                                    ))}
+                                    {skills.map((skill, idx) => {
+                                        const isKnown = skillConfidence[skill] === 'know';
+                                        return (
+                                            <button
+                                                key={idx}
+                                                onClick={() => handleSkillToggle(skill)}
+                                                className={`px-3 py-1.5 text-sm font-medium rounded-full border transition-all ${isKnown
+                                                    ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100'
+                                                    : 'bg-orange-50 text-orange-700 border-orange-300 hover:bg-orange-100'
+                                                    }`}
+                                            >
+                                                {isKnown ? (
+                                                    <>
+                                                        <Check className="w-3 h-3 inline mr-1" />
+                                                        {skill}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <AlertCircle className="w-3 h-3 inline mr-1" />
+                                                        {skill}
+                                                    </>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ))}
+                    </div>
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800 leading-relaxed">
+                            <strong>💡 Tip:</strong> Click each skill to toggle between "I know this" (green ✓) and "Need practice" (orange ⚠).
+                            Your readiness score updates automatically!
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Export Tools */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        <Download className="w-5 h-5 inline mr-2" />
+                        Export Tools
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">Save your analysis in different formats</p>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Button
+                            variant="secondary"
+                            onClick={() => copyToClipboard(formatPlan(), '7-Day Plan')}
+                            className="flex flex-col items-center justify-center gap-2 py-5 h-auto"
+                        >
+                            <Copy className="w-5 h-5" />
+                            <span className="font-semibold">Copy Plan</span>
+                            <span className="text-xs text-gray-500">7-day study plan</span>
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => copyToClipboard(formatChecklist(), 'Checklist')}
+                            className="flex flex-col items-center justify-center gap-2 py-5 h-auto"
+                        >
+                            <Copy className="w-5 h-5" />
+                            <span className="font-semibold">Copy Checklist</span>
+                            <span className="text-xs text-gray-500">Round-wise prep</span>
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => copyToClipboard(formatQuestions(), 'Questions')}
+                            className="flex flex-col items-center justify-center gap-2 py-5 h-auto"
+                        >
+                            <Copy className="w-5 h-5" />
+                            <span className="font-semibold">Copy Questions</span>
+                            <span className="text-xs text-gray-500">10 likely questions</span>
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={downloadTXT}
+                            className="flex flex-col items-center justify-center gap-2 py-5 h-auto"
+                        >
+                            <Download className="w-5 h-5" />
+                            <span className="font-semibold">Download TXT</span>
+                            <span className="text-xs text-white/80">Complete report</span>
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
@@ -142,7 +323,7 @@ export default function Results() {
             </Card>
 
             {/* 7-Day Plan */}
-            <Card>
+            <Card id="day-1-plan">
                 <CardHeader>
                     <CardTitle>
                         <Calendar className="w-5 h-5 inline mr-2" />
@@ -192,6 +373,36 @@ export default function Results() {
                 </CardContent>
             </Card>
 
+            {/* Action Next Box */}
+            {weakSkills.length > 0 && (
+                <Card className="bg-amber-50 border-amber-200">
+                    <CardHeader>
+                        <CardTitle className="text-amber-900">
+                            <Target className="w-5 h-5 inline mr-2" />
+                            Action Next
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            <div>
+                                <h4 className="font-semibold text-amber-900 mb-2">Top Skills to Practice:</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {weakSkills.map((skill, idx) => (
+                                        <span key={idx} className="px-3 py-1 bg-amber-100 text-amber-800 text-sm font-medium rounded-full border border-amber-300">
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="pt-2 border-t border-amber-200">
+                                <p className="text-amber-900 font-medium mb-2">🎯 Suggested Action:</p>
+                                <p className="text-amber-800">Start with <a href="#day-1-plan" className="underline font-semibold hover:text-amber-900">Day 1 of your study plan</a> to build momentum!</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Bottom Actions */}
             <div className="flex gap-4 justify-center pb-8">
                 <Button variant="secondary" onClick={() => navigate('/app/analyzer')}>
@@ -205,7 +416,7 @@ export default function Results() {
     );
 }
 
-// Circular Progress Component (similar to Dashboard)
+// Circular Progress Component
 function CircularProgress({ score }) {
     const clampedScore = Math.min(100, Math.max(0, score));
     const size = 160;
@@ -214,11 +425,10 @@ function CircularProgress({ score }) {
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (clampedScore / 100) * circumference;
 
-    // Color based on score
     const getColor = () => {
-        if (clampedScore >= 75) return '#10b981'; // green
-        if (clampedScore >= 50) return '#f59e0b'; // orange
-        return '#ef4444'; // red
+        if (clampedScore >= 75) return '#10b981';
+        if (clampedScore >= 50) return '#f59e0b';
+        return '#ef4444';
     };
 
     return (
@@ -242,7 +452,7 @@ function CircularProgress({ score }) {
                     strokeDasharray={circumference}
                     strokeDashoffset={offset}
                     strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 1s ease-in-out' }}
+                    style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
                 />
             </svg>
             <div className="absolute flex flex-col items-center justify-center">

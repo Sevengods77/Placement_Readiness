@@ -53,6 +53,12 @@ export default function JDAnalyzer() {
                 const score = calculateReadinessScore(formData, skillData);
                 console.log("Score:", score);
 
+                // Initialize skillConfidenceMap (all skills default to "practice")
+                const skillConfidenceMap = {};
+                Object.values(skillData.detectedSkills).flat().forEach(skill => {
+                    skillConfidenceMap[skill] = 'practice';
+                });
+
                 // Prepare analysis data
                 const analysisData = {
                     company: formData.company,
@@ -62,7 +68,9 @@ export default function JDAnalyzer() {
                     checklist,
                     plan,
                     questions,
-                    readinessScore: score
+                    readinessScore: score,
+                    baseReadinessScore: score, // Store original score
+                    skillConfidenceMap // Store skill confidence states
                 };
 
                 // AUTO-SAVE to history immediately

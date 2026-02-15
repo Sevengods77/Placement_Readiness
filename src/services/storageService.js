@@ -105,6 +105,38 @@ export function deleteAnalysis(id) {
 }
 
 /**
+ * Update an existing analysis by ID
+ * @param {string} id - Analysis ID
+ * @param {Object} updates - Fields to update
+ * @returns {boolean} - Success status
+ */
+export function updateAnalysis(id, updates) {
+    try {
+        console.log("[STORAGE] updateAnalysis:", id, updates);
+        const analyses = getHistory();
+        const index = analyses.findIndex(a => a.id === id);
+
+        if (index === -1) {
+            console.error("[STORAGE] Analysis not found:", id);
+            return false;
+        }
+
+        // Merge updates with existing data
+        analyses[index] = {
+            ...analyses[index],
+            ...updates
+        };
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(analyses));
+        console.log("[STORAGE] Updated successfully");
+        return true;
+    } catch (error) {
+        console.error('[STORAGE] Error updating analysis:', error);
+        return false;
+    }
+}
+
+/**
  * Clear all history
  */
 export function clearHistory() {
