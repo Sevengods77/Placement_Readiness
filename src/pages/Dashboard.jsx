@@ -70,6 +70,15 @@ function SkillBreakdown() {
 
   console.log('SkillBreakdown rendering, data:', data);
 
+  // SSR Safety: Only render chart on client-side (fixes Vercel issue)
+  if (typeof window === 'undefined') {
+    return (
+      <div style={{ width: '100%', height: '300px' }} className="flex items-center justify-center">
+        <p className="text-gray-500">Loading chart...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height: '300px' }} className="flex items-center justify-center">
       <ResponsiveContainer width="100%" height="100%">

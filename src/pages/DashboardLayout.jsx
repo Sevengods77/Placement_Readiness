@@ -1,11 +1,13 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Code, FileText, BookOpen, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, Code, FileText, BookOpen, User, LogOut, Sparkles, History } from 'lucide-react';
 
 export default function DashboardLayout() {
   const location = useLocation();
 
   const navItems = [
     { path: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/app/analyzer', label: 'JD Analyzer', icon: Sparkles },
+    { path: '/app/history', label: 'History', icon: History },
     { path: '/app/practice', label: 'Practice', icon: Code },
     { path: '/app/assessments', label: 'Assessments', icon: FileText },
     { path: '/app/resources', label: 'Resources', icon: BookOpen },
@@ -29,11 +31,10 @@ export default function DashboardLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive(item.path)
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive(item.path)
                     ? 'bg-primary text-white'
                     : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
