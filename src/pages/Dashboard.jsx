@@ -68,10 +68,12 @@ function SkillBreakdown() {
     { name: 'Aptitude', value: 70 },
   ];
 
+  console.log('SkillBreakdown rendering, data:', data);
+
   return (
-    <div className="w-full h-full flex items-center justify-center min-h-[300px]">
+    <div style={{ width: '100%', height: '300px' }} className="flex items-center justify-center">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={data} margin={{ top: 30, right: 60, bottom: 30, left: 60 }}>
+        <RadarChart data={data} margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
           <PolarGrid stroke="#e5e7eb" />
           <PolarAngleAxis dataKey="name" stroke="#6b7280" tick={{ fontSize: 11, fontWeight: 500 }} />
           <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
@@ -109,7 +111,7 @@ export default function Dashboard() {
         <div className="space-y-8">
           {/* Overall Readiness */}
           <Card className="min-h-[420px] flex flex-col">
-            <CardHeader className="text-center">
+            <CardHeader>
               <CardTitle>Overall Readiness</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center">
@@ -159,7 +161,7 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle>Skill Breakdown</CardTitle>
             </CardHeader>
-            <CardContent className="h-[340px]">
+            <CardContent>
               <SkillBreakdown />
             </CardContent>
           </Card>
@@ -190,8 +192,8 @@ export default function Dashboard() {
                       <div key={day} className="flex flex-col items-center gap-2 flex-1">
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${isActive
-                              ? 'bg-primary text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-400'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-gray-100 text-gray-400'
                             }`}
                         >
                           {day[0]}
