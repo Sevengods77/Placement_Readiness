@@ -1,0 +1,71 @@
+.proof-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background-color: var(--color-white);
+    border-top: 1px solid var(--color-border);
+    padding: 0 var(--space-4);
+    display: flex;
+    align-items: center;
+    z-index: 100;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.checklist-group {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.checklist-item input {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    display: inline-block;
+    position: relative;
+}
+
+.checklist-item input:checked+.checkbox-custom {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.checklist-item input:checked+.checkbox-custom::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.btn-link {
+    font-size: 13px;
+    color: #666;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}

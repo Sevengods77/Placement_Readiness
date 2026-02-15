@@ -1,0 +1,29 @@
+:root {
+  /* Colors */
+  --color-bg: #F7F6F3;
+  --color-text-primary: #111111;
+  --color-accent: #8B0000;
+  --color-success: #4A6741; /* Muted Green */
+  --color-warning: #B48B30; /* Muted Amber */
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-white: #FFFFFF;
+
+  /* Typography */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+
+  --font-size-body: 17px;
+  --line-height-body: 1.7;
+  --max-content-width: 720px;
+
+  /* Spacing */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 40px;
+  --space-5: 64px;
+
+  /* Components */
+  --radius: 4px;
+  --transition: 180ms ease-in-out;
+}

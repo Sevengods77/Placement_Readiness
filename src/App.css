@@ -1,0 +1,59 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-bottom: 64px;
+    /* Space for footer */
+}
+
+.main-layout {
+    display: grid;
+    grid-template-columns: 7fr 3fr;
+    flex: 1;
+}
+
+.primary-workspace {
+    padding: 0 var(--space-4);
+    overflow-y: auto;
+}
+
+.secondary-panel-wrapper {
+    position: sticky;
+    top: 56px;
+    height: calc(100vh - 56px - 64px);
+}
+
+.card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+    transition: border-color var(--transition);
+}
+
+.card h3 {
+    font-size: 24px;
+    margin-bottom: var(--space-2);
+}
+
+.rules-list {
+    list-style-type: none;
+    margin-top: var(--space-2);
+}
+
+.rules-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+}
+
+.rules-list li::before {
+    content: "→";
+    margin-right: 12px;
+    color: var(--color-accent);
+}
+
+.rules-list li:last-child {
+    border-bottom: none;
+}

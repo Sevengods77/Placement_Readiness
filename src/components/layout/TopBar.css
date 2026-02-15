@@ -1,0 +1,31 @@
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 var(--space-3);
+    height: 56px;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-white);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.top-bar-left {
+    text-transform: uppercase;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    text-transform: uppercase;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+}
+
+.status-shipped {
+    background-color: var(--color-success);
+    color: var(--color-white);
+    border-color: transparent;
+}

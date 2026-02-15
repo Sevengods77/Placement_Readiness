@@ -1,0 +1,17 @@
+.context-header {
+    padding: var(--space-5) 0;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--space-4);
+}
+
+.context-header h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    margin-bottom: var(--space-1);
+    color: var(--color-text-primary);
+}
+
+.context-header p {
+    color: #666;
+    font-size: 18px;
+}

@@ -1,0 +1,48 @@
+@import './variables.css';
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+.serif {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+button {
+    font-family: var(--font-body);
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: all var(--transition);
+}
+
+input,
+textarea {
+    font-family: var(--font-body);
+    font-size: inherit;
+}
+
+/* Common Layout Utilities */
+.container-720 {
+    max-width: var(--max-content-width);
+    margin-left: auto;
+    margin-right: auto;
+}

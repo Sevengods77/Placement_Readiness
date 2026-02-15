@@ -1,0 +1,57 @@
+.secondary-panel {
+    padding: var(--space-4);
+    background-color: var(--color-white);
+    border-left: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    height: 100%;
+}
+
+.step-explanation h3 {
+    font-size: 20px;
+    margin-bottom: var(--space-1);
+}
+
+.step-explanation p {
+    color: #666;
+    font-size: 15px;
+}
+
+.prompt-box {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.prompt-header {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #888;
+}
+
+.prompt-content {
+    padding: 12px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: #444;
+    line-height: 1.5;
+}
+
+.panel-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+}
