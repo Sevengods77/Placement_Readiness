@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Award, CheckCircle2, Calendar, HelpCircle, ArrowLeft, Tag, Copy, Download, Target, Check, AlertCircle } from 'lucide-react';
+import { Award, CheckCircle2, Calendar, HelpCircle, ArrowLeft, Tag, Copy, Download, Target, Check, AlertCircle, Building2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { getAnalysisById, updateAnalysis } from '../services/storageService';
+import { getRoundTypeColor } from '../services/roundMappingService';
 
 export default function Results() {
     const location = useLocation();
@@ -189,6 +190,136 @@ ${formatQuestions()}
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Company Intel */}
+            {analysisData.companyIntel && (
+                <Card className="border-indigo-100 bg-white">
+                    <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2">
+                                <Building2 className="w-5 h-5 text-indigo-600" />
+                                Company Intelligence
+                            </CardTitle>
+                            <span className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
+                                🤖 Heuristic Mode
+                            </span>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                        {/* Company Header */}
+                        <div className="flex items-center gap-4 mb-6 pb-6 border-b">
+                            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-3xl">
+                                {analysisData.companyIntel.sizeInfo.icon}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-gray-900">{analysisData.companyIntel.companyName}</h3>
+                                <p className="text-sm text-gray-600 mt-0.5">{analysisData.companyIntel.industry}</p>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                                        {analysisData.companyIntel.sizeInfo.label}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                        {analysisData.companyIntel.sizeInfo.range}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Hiring Focus */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Hiring Focus</h4>
+
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200">
+                                    <p className="text-xs font-semibold text-indigo-600 mb-2">PRIMARY</p>
+                                    <p className="font-bold text-gray-900">{analysisData.companyIntel.hiringFocus.primary}</p>
+                                </div>
+                                <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200">
+                                    <p className="text-xs font-semibold text-purple-600 mb-2">SECONDARY</p>
+                                    <p className="text-sm text-gray-800">{analysisData.companyIntel.hiringFocus.secondary}</p>
+                                </div>
+                            </div>
+
+                            <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200">
+                                <div className="flex gap-3">
+                                    <span className="text-2xl">💡</span>
+                                    <div>
+                                        <p className="text-xs font-bold text-blue-900 mb-1">KEY INSIGHT</p>
+                                        <p className="text-sm text-blue-800 leading-relaxed">{analysisData.companyIntel.hiringFocus.emphasis}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Round Mapping Timeline */}
+            {analysisData.roundMapping && (
+                <Card className="border-purple-200 bg-gradient-to-br from-purple-50/50 to-pink-50/50">
+                    <CardHeader>
+                        <CardTitle>
+                            <Target className="w-5 h-5 inline mr-2" />
+                            Expected Interview Rounds
+                        </CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">
+                            Typical process for {analysisData.companyIntel?.sizeInfo.label} companies
+                        </p>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {analysisData.roundMapping.map((round, index) => (
+                                <div key={round.number} className="relative">
+                                    {/* Timeline connector */}
+                                    {index !== analysisData.roundMapping.length - 1 && (
+                                        <div className="absolute left-6 top-14 w-0.5 h-full bg-purple-200" />
+                                    )}
+
+                                    <div className="flex gap-4">
+                                        {/* Round number badge */}
+                                        <div className="flex-shrink-0 w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-lg z-10">
+                                            {round.number}
+                                        </div>
+
+                                        {/* Round content */}
+                                        <div className="flex-1 bg-white rounded-lg border border-purple-200 p-4">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div>
+                                                    <h4 className="font-bold text-gray-900 text-lg">{round.title}</h4>
+                                                    <p className={`text-xs font-semibold px-2 py-1 rounded inline-block mt-1 border ${getRoundTypeColor(round.type)}`}>
+                                                        {round.type.toUpperCase()}
+                                                    </p>
+                                                </div>
+                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                    {round.duration}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm font-semibold text-purple-700 mb-2">
+                                                Focus: {round.focus}
+                                            </p>
+                                            <div className="mt-3 p-3 bg-purple-50 rounded border border-purple-100">
+                                                <p className="text-xs font-bold text-purple-900 mb-1">📌 Why This Round Matters</p>
+                                                <p className="text-sm text-purple-800 leading-relaxed">{round.whyItMatters}</p>
+                                            </div>
+                                            <div className="mt-3">
+                                                <p className="text-xs font-semibold text-gray-700 mb-1">✅ Quick Tips:</p>
+                                                <ul className="space-y-1">
+                                                    {round.tips.map((tip, idx) => (
+                                                        <li key={idx} className="text-xs text-gray-600 flex items-start gap-1">
+                                                            <span className="text-purple-500 mt-0.5">•</span>
+                                                            <span>{tip}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Interactive Skills */}
             <Card>

@@ -6,6 +6,8 @@ import Button from '../components/ui/Button';
 import { extractSkills } from '../services/skillExtractor';
 import { generateRoundwiseChecklist, generate7DayPlan, generateInterviewQuestions, calculateReadinessScore } from '../services/analysisService';
 import { saveAnalysis } from '../services/storageService';
+import { generateCompanyIntel } from '../services/companyIntelService';
+import { generateRoundMapping } from '../services/roundMappingService';
 
 export default function JDAnalyzer() {
     const navigate = useNavigate();
@@ -53,6 +55,16 @@ export default function JDAnalyzer() {
                 const score = calculateReadinessScore(formData, skillData);
                 console.log("Score:", score);
 
+                // Generate Company Intel
+                console.log("Generating company intel...");
+                const companyIntel = generateCompanyIntel(formData.company, formData.role);
+                console.log("Company Intel:", companyIntel);
+
+                // Generate Round Mapping
+                console.log("Generating round mapping...");
+                const roundMapping = generateRoundMapping(companyIntel.size, skillData.detectedSkills);
+                console.log("Round Mapping:", roundMapping);
+
                 // Initialize skillConfidenceMap (all skills default to "practice")
                 const skillConfidenceMap = {};
                 Object.values(skillData.detectedSkills).flat().forEach(skill => {
@@ -70,7 +82,9 @@ export default function JDAnalyzer() {
                     questions,
                     readinessScore: score,
                     baseReadinessScore: score, // Store original score
-                    skillConfidenceMap // Store skill confidence states
+                    skillConfidenceMap, // Store skill confidence states
+                    companyIntel, // Company intelligence
+                    roundMapping // Interview round mapping
                 };
 
                 // AUTO-SAVE to history immediately
