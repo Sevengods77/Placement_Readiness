@@ -11,6 +11,7 @@ import Results from './pages/Results';
 import History from './pages/History';
 import TestChecklist from './pages/TestChecklist';
 import ShipPage from './pages/ShipPage';
+import ProofPage from './pages/ProofPage';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         {/* Test Checklist Routes */}
         <Route path="/prp/07-test" element={<TestChecklist />} />
         <Route path="/prp/08-ship" element={<ShipPage />} />
+        <Route path="/prp/proof" element={<ProofPage />} />
       </Routes>
     </Router>
   );
