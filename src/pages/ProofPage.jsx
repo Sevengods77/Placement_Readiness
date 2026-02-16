@@ -42,6 +42,24 @@ export default function ProofPage() {
         };
     }, []);
 
+    // Auto-save submission when URLs change (with debouncing)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            // Only save if at least one URL is provided
+            if (submission.lovableUrl || submission.githubUrl || submission.deployedUrl) {
+                console.log('[PROOF] Auto-saving submission...');
+                saveSubmission(submission);
+                // Refresh status after save
+                const shipped = isProjectShipped();
+                setIsShipped(shipped);
+                const status = getCompletionStatus();
+                setCompletionStatus(status);
+            }
+        }, 1000); // Save 1 second after user stops typing
+
+        return () => clearTimeout(timer);
+    }, [submission]);
+
     const loadData = () => {
         const stepsData = getSteps();
         setSteps(stepsData);
@@ -303,7 +321,7 @@ export default function ProofPage() {
                         </div>
 
                         <Button variant="primary" onClick={handleSaveSubmission} className="w-full">
-                            Save Artifacts
+                            Save Artifacts (Auto-saves as you type)
                         </Button>
                     </div>
                 </CardContent>
