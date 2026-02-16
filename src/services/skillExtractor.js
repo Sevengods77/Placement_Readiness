@@ -3,32 +3,34 @@
  * Detects skills from JD text using keyword matching
  */
 
-// Skill categories with keywords
+import { createEmptySkillsObject } from './schemaValidator.js';
+
+// Skill categories with keywords (mapped to standardized schema keys)
 const SKILL_CATEGORIES = {
-    'Core CS': [
+    'coreCS': [
         'dsa', 'data structures', 'algorithms', 'oop', 'object oriented',
         'object-oriented', 'dbms', 'database', 'os', 'operating system',
         'networks', 'networking', 'computer networks'
     ],
-    'Languages': [
+    'languages': [
         'java', 'python', 'javascript', 'typescript', 'c++', 'cpp',
         'c programming', 'c#', 'csharp', 'go', 'golang', 'rust'
     ],
-    'Web': [
+    'web': [
         'react', 'reactjs', 'next.js', 'nextjs', 'node.js', 'nodejs',
         'express', 'expressjs', 'rest', 'restful', 'rest api',
         'graphql', 'html', 'css', 'angular', 'vue', 'vuejs'
     ],
-    'Data': [
+    'data': [
         'sql', 'mysql', 'postgresql', 'postgres', 'mongodb', 'mongo',
         'redis', 'database', 'nosql', 'sqlite'
     ],
-    'Cloud/DevOps': [
+    'cloud': [
         'aws', 'amazon web services', 'azure', 'microsoft azure',
         'gcp', 'google cloud', 'docker', 'kubernetes', 'k8s',
         'ci/cd', 'cicd', 'jenkins', 'linux', 'unix', 'git', 'github'
     ],
-    'Testing': [
+    'testing': [
         'selenium', 'cypress', 'playwright', 'junit', 'pytest',
         'testing', 'test automation', 'jest', 'mocha'
     ]
@@ -40,12 +42,20 @@ const SKILL_CATEGORIES = {
  * @returns {Object} - Detected skills grouped by category
  */
 export function extractSkills(jdText) {
+    // Always start with empty structure
+    const detectedSkills = createEmptySkillsObject();
+
     if (!jdText || typeof jdText !== 'string') {
-        return { detectedSkills: {}, hasSkills: false };
+        // Return empty structure with default skills
+        detectedSkills.other = ['Communication', 'Problem solving', 'Basic coding', 'Projects'];
+        return {
+            detectedSkills,
+            hasSkills: false,
+            totalSkillsFound: 0
+        };
     }
 
     const lowerText = jdText.toLowerCase();
-    const detectedSkills = {};
     let totalSkillsFound = 0;
 
     // Check each category
@@ -69,10 +79,10 @@ export function extractSkills(jdText) {
         }
     });
 
-    // If no skills detected, provide fallback
+    // If no skills detected, populate "other" with default skills
     const hasSkills = totalSkillsFound > 0;
     if (!hasSkills) {
-        detectedSkills['General'] = ['Basic Programming', 'Problem Solving', 'Communication'];
+        detectedSkills.other = ['Communication', 'Problem solving', 'Basic coding', 'Projects'];
     }
 
     return {
@@ -88,5 +98,7 @@ export function extractSkills(jdText) {
  * @returns {number}
  */
 export function getSkillCategoryCount(detectedSkills) {
-    return Object.keys(detectedSkills).filter(cat => cat !== 'General').length;
+    return Object.keys(detectedSkills).filter(cat =>
+        cat !== 'other' && detectedSkills[cat] && detectedSkills[cat].length > 0
+    ).length;
 }

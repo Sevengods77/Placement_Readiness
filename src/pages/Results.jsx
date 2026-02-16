@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import Button from '../components/ui/Button';
 import { getAnalysisById, updateAnalysis } from '../services/storageService';
 import { getRoundTypeColor } from '../services/roundMappingService';
+import { calculateFinalScore } from '../services/analysisService';
 
 export default function Results() {
     const location = useLocation();
@@ -33,10 +34,9 @@ export default function Results() {
                 const confidenceMap = saved.skillConfidenceMap || {};
                 setSkillConfidence(confidenceMap);
 
-                // Calculate adjusted score
-                const base = saved.baseReadinessScore || saved.readinessScore;
-                const adjusted = calculateScore(base, confidenceMap);
-                setAdjustedScore(adjusted);
+                // Use finalScore if available, otherwise fall back to baseScore
+                const currentScore = saved.finalScore !== undefined ? saved.finalScore : (saved.baseScore || saved.readinessScore || 0);
+                setAdjustedScore(currentScore);
             } else {
                 alert("Analysis not found!");
                 navigate('/app/analyzer');
@@ -47,10 +47,7 @@ export default function Results() {
     }, [location, navigate]);
 
     const calculateScore = (baseScore, confidenceMap) => {
-        const knowCount = Object.values(confidenceMap).filter(v => v === 'know').length;
-        const practiceCount = Object.values(confidenceMap).filter(v => v === 'practice').length;
-        const score = baseScore + (knowCount * 2) - (practiceCount * 2);
-        return Math.max(0, Math.min(100, score));
+        return calculateFinalScore(baseScore, confidenceMap);
     };
 
     const handleSkillToggle = (skill) => {
@@ -61,14 +58,14 @@ export default function Results() {
 
         setSkillConfidence(newConfidence);
 
-        const base = analysisData.baseReadinessScore || analysisData.readinessScore;
+        const base = analysisData.baseScore || analysisData.baseReadinessScore || analysisData.readinessScore || 0;
         const newScore = calculateScore(base, newConfidence);
         setAdjustedScore(newScore);
 
         // Save to localStorage
         updateAnalysis(analysisId, {
             skillConfidenceMap: newConfidence,
-            readinessScore: newScore
+            finalScore: newScore
         });
     };
 
@@ -80,7 +77,8 @@ export default function Results() {
 
     const formatPlan = () => {
         if (!analysisData) return '';
-        return analysisData.plan.map(day =>
+        const plan = analysisData.plan7Days || analysisData.plan || [];
+        return plan.map(day =>
             `Day ${day.day}: ${day.title}\n${day.tasks.map(t => `  • ${t}`).join('\n')}`
         ).join('\n\n');
     };
@@ -147,7 +145,9 @@ ${formatQuestions()}
         return <div className="text-center py-20">Loading...</div>;
     }
 
-    const { company, role, extractedSkills, checklist, plan, questions } = analysisData;
+    const { company, role, extractedSkills, checklist, roundMapping } = analysisData;
+    const plan = analysisData.plan7Days || analysisData.plan || [];
+    const questions = analysisData.questions || [];
     const weakSkills = getWeakSkills();
 
     return (

@@ -9,11 +9,11 @@
  * @returns {Array} - Array of rounds with checklists
  */
 export function generateRoundwiseChecklist(detectedSkills) {
-    const hasWeb = detectedSkills['Web'] || [];
-    const hasData = detectedSkills['Data'] || [];
-    const hasCloud = detectedSkills['Cloud/DevOps'] || [];
-    const hasLanguages = detectedSkills['Languages'] || [];
-    const hasCoreCS = detectedSkills['Core CS'] || [];
+    const hasWeb = detectedSkills.web || [];
+    const hasData = detectedSkills.data || [];
+    const hasCloud = detectedSkills.cloud || [];
+    const hasLanguages = detectedSkills.languages || [];
+    const hasCoreCS = detectedSkills.coreCS || [];
 
     return [
         {
@@ -90,9 +90,9 @@ export function generateRoundwiseChecklist(detectedSkills) {
  * @returns {Array} - Day-wise plan
  */
 export function generate7DayPlan(detectedSkills) {
-    const hasWeb = detectedSkills['Web'] || [];
-    const hasCoreCS = detectedSkills['Core CS'] || [];
-    const hasLanguages = detectedSkills['Languages'] || [];
+    const hasWeb = detectedSkills.web || [];
+    const hasCoreCS = detectedSkills.coreCS || [];
+    const hasLanguages = detectedSkills.languages || [];
 
     const primaryLang = hasLanguages[0] || 'your preferred language';
     const webTech = hasWeb[0] || 'web development';
@@ -182,7 +182,7 @@ export function generateInterviewQuestions(detectedSkills) {
     const questions = [];
 
     // Core CS questions
-    if (detectedSkills['Core CS']) {
+    if (detectedSkills.coreCS && detectedSkills.coreCS.length > 0) {
         questions.push(
             'Explain the difference between process and thread. When would you use each?',
             'What is database normalization? Why is it important?',
@@ -197,8 +197,8 @@ export function generateInterviewQuestions(detectedSkills) {
     );
 
     // Language-specific
-    if (detectedSkills['Languages']) {
-        const langs = detectedSkills['Languages'];
+    if (detectedSkills.languages && detectedSkills.languages.length > 0) {
+        const langs = detectedSkills.languages;
         if (langs.some(l => l.toLowerCase().includes('java'))) {
             questions.push('What is the difference between abstract class and interface in Java?');
         } else if (langs.some(l => l.toLowerCase().includes('python'))) {
@@ -209,8 +209,8 @@ export function generateInterviewQuestions(detectedSkills) {
     }
 
     // Web questions
-    if (detectedSkills['Web']) {
-        const webSkills = detectedSkills['Web'];
+    if (detectedSkills.web && detectedSkills.web.length > 0) {
+        const webSkills = detectedSkills.web;
         if (webSkills.some(s => s.toLowerCase().includes('react'))) {
             questions.push('Explain state management in React. What are hooks?');
         }
@@ -222,8 +222,8 @@ export function generateInterviewQuestions(detectedSkills) {
     }
 
     // Data questions
-    if (detectedSkills['Data']) {
-        const dataSkills = detectedSkills['Data'];
+    if (detectedSkills.data && detectedSkills.data.length > 0) {
+        const dataSkills = detectedSkills.data;
         if (dataSkills.some(s => s.toLowerCase().includes('sql'))) {
             questions.push('Explain indexing in databases. When does it help performance?');
         }
@@ -233,7 +233,7 @@ export function generateInterviewQuestions(detectedSkills) {
     }
 
     // Cloud/DevOps questions
-    if (detectedSkills['Cloud/DevOps']) {
+    if (detectedSkills.cloud && detectedSkills.cloud.length > 0) {
         questions.push('What are the benefits of containerization with Docker?');
     }
 
@@ -254,17 +254,17 @@ export function generateInterviewQuestions(detectedSkills) {
 }
 
 /**
- * Calculate readiness score
+ * Calculate base readiness score (computed once on analysis)
  * @param {Object} jdData - {company, role, jdText}
  * @param {Object} skillData - {detectedSkills, totalSkillsFound}
  * @returns {number} - Score 0-100
  */
-export function calculateReadinessScore(jdData, skillData) {
+export function calculateBaseScore(jdData, skillData) {
     let score = 35; // Base score
 
     // +5 per skill category (max 30)
     const categoryCount = Object.keys(skillData.detectedSkills).filter(
-        cat => cat !== 'General'
+        cat => cat !== 'other' && skillData.detectedSkills[cat] && skillData.detectedSkills[cat].length > 0
     ).length;
     score += Math.min(categoryCount * 5, 30);
 
@@ -285,4 +285,17 @@ export function calculateReadinessScore(jdData, skillData) {
 
     // Cap at 100
     return Math.min(score, 100);
+}
+
+/**
+ * Calculate final score based on skill confidence adjustments
+ * @param {number} baseScore - Initial score from analysis
+ * @param {Object} skillConfidenceMap - Map of skill -> 'know' | 'practice'
+ * @returns {number} - Adjusted score 0-100
+ */
+export function calculateFinalScore(baseScore, skillConfidenceMap) {
+    const knowCount = Object.values(skillConfidenceMap).filter(v => v === 'know').length;
+    const practiceCount = Object.values(skillConfidenceMap).filter(v => v === 'practice').length;
+    const adjustedScore = baseScore + (knowCount * 2) - (practiceCount * 2);
+    return Math.max(0, Math.min(100, adjustedScore));
 }

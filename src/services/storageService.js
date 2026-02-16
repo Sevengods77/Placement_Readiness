@@ -3,6 +3,8 @@
  * Handles localStorage persistence for analysis history
  */
 
+import { validateAnalysisEntry, migrateAnalysisEntry, isValidEntry } from './schemaValidator.js';
+
 const STORAGE_KEY = 'placement_analyses';
 
 /**
@@ -26,12 +28,15 @@ export function saveAnalysis(analysisData) {
         const entry = {
             id: generateId(),
             createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             ...analysisData
         };
 
-        console.log("[STORAGE] New entry created:", entry);
+        // Validate entry before saving
+        const validatedEntry = validateAnalysisEntry(entry);
+        console.log("[STORAGE] Entry validated:", validatedEntry);
 
-        analyses.unshift(entry); // Add to beginning
+        analyses.unshift(validatedEntry); // Add to beginning
         const jsonString = JSON.stringify(analyses);
         localStorage.setItem(STORAGE_KEY, jsonString);
 
@@ -40,7 +45,7 @@ export function saveAnalysis(analysisData) {
         console.log("[STORAGE] Saved successfully, verification:", verify !== null);
         console.log("[STORAGE] New history count:", analyses.length);
 
-        return entry.id;
+        return validatedEntry.id;
     } catch (error) {
         console.error("[STORAGE] Error saving:", error);
         alert("Failed to save: " + error.message);
@@ -49,7 +54,7 @@ export function saveAnalysis(analysisData) {
 }
 
 /**
- * Get all saved analyses
+ * Get all saved analyses (with validation and migration)
  * @returns {Array} - Array of analysis entries
  */
 export function getHistory() {
@@ -65,9 +70,41 @@ export function getHistory() {
 
         const parsed = JSON.parse(data);
         console.log("[STORAGE] Parsed history, count:", parsed.length);
-        return parsed;
+
+        // Filter and migrate entries
+        const validEntries = [];
+        let corruptedCount = 0;
+
+        parsed.forEach((entry, index) => {
+            if (isValidEntry(entry)) {
+                try {
+                    const migrated = migrateAnalysisEntry(entry);
+                    validEntries.push(migrated);
+                } catch (error) {
+                    console.error(`[STORAGE] Failed to migrate entry ${index}:`, error);
+                    corruptedCount++;
+                }
+            } else {
+                console.warn(`[STORAGE] Skipping invalid entry at index ${index}:`, entry);
+                corruptedCount++;
+            }
+        });
+
+        if (corruptedCount > 0) {
+            console.warn(`[STORAGE] Skipped ${corruptedCount} corrupted entries`);
+            // Save cleaned history back to localStorage
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(validEntries));
+            // Store corrupted count for UI to display
+            sessionStorage.setItem('corrupted_entries_count', corruptedCount.toString());
+        } else {
+            sessionStorage.removeItem('corrupted_entries_count');
+        }
+
+        return validEntries;
     } catch (error) {
         console.error('[STORAGE] Error reading history:', error);
+        // If JSON parsing fails completely, return empty array
+        sessionStorage.setItem('corrupted_entries_count', '1');
         return [];
     }
 }
@@ -121,10 +158,11 @@ export function updateAnalysis(id, updates) {
             return false;
         }
 
-        // Merge updates with existing data
+        // Merge updates with existing data and add updatedAt timestamp
         analyses[index] = {
             ...analyses[index],
-            ...updates
+            ...updates,
+            updatedAt: new Date().toISOString()
         };
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(analyses));
@@ -142,4 +180,14 @@ export function updateAnalysis(id, updates) {
 export function clearHistory() {
     console.log("[STORAGE] clearHistory called");
     localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem('corrupted_entries_count');
+}
+
+/**
+ * Get count of corrupted entries (if any were skipped)
+ * @returns {number} - Count of corrupted entries
+ */
+export function getCorruptedEntriesCount() {
+    const count = sessionStorage.getItem('corrupted_entries_count');
+    return count ? parseInt(count, 10) : 0;
 }

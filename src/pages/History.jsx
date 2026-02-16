@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { History as HistoryIcon, Calendar, Building2, Briefcase, TrendingUp, Trash2, FileText } from 'lucide-react';
+import { History as HistoryIcon, Calendar, Building2, Briefcase, TrendingUp, Trash2, FileText, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { getHistory, deleteAnalysis } from '../services/storageService';
+import { getHistory, deleteAnalysis, getCorruptedEntriesCount } from '../services/storageService';
 
 export default function History() {
     const navigate = useNavigate();
     const [analyses, setAnalyses] = useState([]);
+    const [corruptedCount, setCorruptedCount] = useState(0);
+    const [showCorruptedWarning, setShowCorruptedWarning] = useState(false);
 
     useEffect(() => {
         loadHistory();
@@ -16,6 +18,11 @@ export default function History() {
     const loadHistory = () => {
         const history = getHistory();
         setAnalyses(history);
+
+        // Check for corrupted entries
+        const corrupted = getCorruptedEntriesCount();
+        setCorruptedCount(corrupted);
+        setShowCorruptedWarning(corrupted > 0);
     };
 
     const handleView = (analysis) => {
@@ -63,6 +70,32 @@ export default function History() {
                     New Analysis
                 </Button>
             </div>
+
+            {/* Corrupted Entries Warning */}
+            {showCorruptedWarning && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <h3 className="font-semibold text-amber-900 mb-1">
+                                    {corruptedCount === 1 ? 'One entry couldn\'t be loaded' : `${corruptedCount} entries couldn\'t be loaded`}
+                                </h3>
+                                <p className="text-sm text-amber-800">
+                                    Some saved entries were corrupted and have been removed. Create a new analysis to continue.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowCorruptedWarning(false)}
+                            className="text-amber-600 hover:text-amber-800 transition-colors"
+                            title="Dismiss"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* History List */}
             {analyses.length === 0 ? (
@@ -133,10 +166,10 @@ export default function History() {
 
                                     {/* Score and Actions */}
                                     <div className="flex items-center gap-3">
-                                        <div className={`px-4 py-2 rounded-lg ${getScoreColor(analysis.readinessScore)}`}>
+                                        <div className={`px-4 py-2 rounded-lg ${getScoreColor(analysis.finalScore || analysis.readinessScore || 0)}`}>
                                             <div className="flex items-center gap-1">
                                                 <TrendingUp className="w-4 h-4" />
-                                                <span className="text-2xl font-bold">{analysis.readinessScore}</span>
+                                                <span className="text-2xl font-bold">{analysis.finalScore || analysis.readinessScore || 0}</span>
                                             </div>
                                             <p className="text-[10px] font-semibold uppercase tracking-wider">Score</p>
                                         </div>
@@ -170,7 +203,7 @@ export default function History() {
                             <div>
                                 <p className="text-2xl font-bold text-primary">
                                     {Math.round(
-                                        analyses.reduce((sum, a) => sum + a.readinessScore, 0) / analyses.length
+                                        analyses.reduce((sum, a) => sum + (a.finalScore || a.readinessScore || 0), 0) / analyses.length
                                     )}
                                 </p>
                                 <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider">
@@ -179,7 +212,7 @@ export default function History() {
                             </div>
                             <div>
                                 <p className="text-2xl font-bold text-primary">
-                                    {analyses.filter(a => a.readinessScore >= 75).length}
+                                    {analyses.filter(a => (a.finalScore || a.readinessScore || 0) >= 75).length}
                                 </p>
                                 <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider">
                                     High Scores (75+)

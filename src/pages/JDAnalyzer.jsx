@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Briefcase, Building2, Sparkles } from 'lucide-react';
+import { FileText, Briefcase, Building2, Sparkles, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { extractSkills } from '../services/skillExtractor';
-import { generateRoundwiseChecklist, generate7DayPlan, generateInterviewQuestions, calculateReadinessScore } from '../services/analysisService';
+import { generateRoundwiseChecklist, generate7DayPlan, generateInterviewQuestions, calculateBaseScore } from '../services/analysisService';
 import { saveAnalysis } from '../services/storageService';
 import { generateCompanyIntel } from '../services/companyIntelService';
 import { generateRoundMapping } from '../services/roundMappingService';
@@ -17,6 +17,7 @@ export default function JDAnalyzer() {
         jdText: ''
     });
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [showLengthWarning, setShowLengthWarning] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -51,9 +52,9 @@ export default function JDAnalyzer() {
                 const questions = generateInterviewQuestions(skillData.detectedSkills);
                 console.log("Questions:", questions);
 
-                console.log("Calculating score...");
-                const score = calculateReadinessScore(formData, skillData);
-                console.log("Score:", score);
+                console.log("Calculating base score...");
+                const baseScore = calculateBaseScore(formData, skillData);
+                console.log("Base Score:", baseScore);
 
                 // Generate Company Intel
                 console.log("Generating company intel...");
@@ -78,10 +79,10 @@ export default function JDAnalyzer() {
                     jdText: formData.jdText,
                     extractedSkills: skillData.detectedSkills,
                     checklist,
-                    plan,
+                    plan7Days: plan,
                     questions,
-                    readinessScore: score,
-                    baseReadinessScore: score, // Store original score
+                    baseScore: baseScore,
+                    finalScore: baseScore, // Initially same as baseScore
                     skillConfidenceMap, // Store skill confidence states
                     companyIntel, // Company intelligence
                     roundMapping // Interview round mapping
@@ -104,10 +105,20 @@ export default function JDAnalyzer() {
     };
 
     const handleChange = (e) => {
+        const newValue = e.target.value;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [e.target.name]: newValue
         });
+
+        // Check JD length for warning
+        if (e.target.name === 'jdText') {
+            if (newValue.length > 0 && newValue.length < 200) {
+                setShowLengthWarning(true);
+            } else {
+                setShowLengthWarning(false);
+            }
+        }
     };
 
     return (
@@ -180,6 +191,14 @@ export default function JDAnalyzer() {
                             <p className="text-xs text-gray-500 mt-1">
                                 {formData.jdText.length} characters
                             </p>
+                            {showLengthWarning && (
+                                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <p className="text-sm text-amber-800">
+                                        This JD is too short to analyze deeply. Paste full JD for better output.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Submit Button */}
