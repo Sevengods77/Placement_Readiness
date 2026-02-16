@@ -9,6 +9,8 @@ import Profile from './pages/Profile';
 import JDAnalyzer from './pages/JDAnalyzer';
 import Results from './pages/Results';
 import History from './pages/History';
+import TestChecklist from './pages/TestChecklist';
+import ShipPage from './pages/ShipPage';
 
 function App() {
   return (
@@ -25,6 +27,9 @@ function App() {
           <Route path="results" element={<Results />} />
           <Route path="history" element={<History />} />
         </Route>
+        {/* Test Checklist Routes */}
+        <Route path="/prp/07-test" element={<TestChecklist />} />
+        <Route path="/prp/08-ship" element={<ShipPage />} />
       </Routes>
     </Router>
   );
